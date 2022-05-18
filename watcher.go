@@ -57,8 +57,10 @@ func (h fdHeap) FdSet() *syscall.FdSet {
 	return fdset
 }
 
-const watcherCmdChanLen = 32
-const notificationLen = 32
+const (
+	watcherCmdChanLen = 32
+	notificationLen   = 32
+)
 
 // Watcher provides asynchronous notifications on input changes
 // The user should supply it pins to watch with AddPin and then wait for changes with Watch
@@ -116,6 +118,10 @@ func (w *Watcher) fdSelect() {
 	fdset := w.fds.FdSet()
 	changed, err := doSelect(int(w.fds[0])+1, nil, nil, fdset, timeval)
 	if err != nil {
+		if err == syscall.EINTR {
+			return
+		}
+
 		fmt.Printf("failed to call syscall.Select, %s", err)
 		os.Exit(1)
 	}
